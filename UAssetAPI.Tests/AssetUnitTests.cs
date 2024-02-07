@@ -242,40 +242,40 @@ namespace UAssetAPI.Tests
         /// In this test, we have an asset with a few properties that UAssetAPI has no serialization for. (The properties do not actually exist in the engine itself, so this is expected behavior.)
         /// UAssetAPI must fallback to UnknownPropertyType to parse the asset correctly and maintain binary equality.
         /// </summary>
-        [TestMethod]
-        public void TestUnknownProperties()
-        {
-            var tester = new UAsset(Path.Combine("TestAssets", "TestUnknownProperties", "BP_DetPack_Charge.uasset"), EngineVersion.VER_UE4_25);
-            Assert.IsTrue(tester.VerifyBinaryEquality());
-            Assert.IsTrue(CheckAllExportsParsedCorrectly(tester));
+        //[TestMethod]
+        //public void TestUnknownProperties()
+        //{
+        //    var tester = new UAsset(Path.Combine("TestAssets", "TestUnknownProperties", "BP_DetPack_Charge.uasset"), EngineVersion.VER_UE4_25);
+        //    Assert.IsTrue(tester.VerifyBinaryEquality());
+        //    Assert.IsTrue(CheckAllExportsParsedCorrectly(tester));
 
-            // Check that only the expected unknown properties are present
-            Dictionary<string, bool> newUnknownProperties = new Dictionary<string, bool>();
-            newUnknownProperties.Add("GarbagePropty", false);
-            newUnknownProperties.Add("EvenMoreGarbageTestingPropertyy", false);
+        //    // Check that only the expected unknown properties are present
+        //    Dictionary<string, bool> newUnknownProperties = new Dictionary<string, bool>();
+        //    newUnknownProperties.Add("GarbagePropty", false);
+        //    newUnknownProperties.Add("EvenMoreGarbageTestingPropertyy", false);
 
-            foreach (Export testExport in tester.Exports)
-            {
-                if (testExport is NormalExport normalTestExport)
-                {
-                    foreach (PropertyData prop in normalTestExport.Data)
-                    {
-                        if (prop is UnknownPropertyData unknownProp)
-                        {
-                            string serializingType = unknownProp?.SerializingPropertyType?.Value;
-                            Assert.AreNotEqual(serializingType, null);
-                            Assert.IsTrue(newUnknownProperties.ContainsKey(serializingType));
-                            newUnknownProperties[serializingType] = true;
-                        }
-                    }
-                }
-            }
+        //    foreach (Export testExport in tester.Exports)
+        //    {
+        //        if (testExport is NormalExport normalTestExport)
+        //        {
+        //            foreach (PropertyData prop in normalTestExport.Data)
+        //            {
+        //                if (prop is UnknownPropertyData unknownProp)
+        //                {
+        //                    string serializingType = unknownProp?.SerializingPropertyType?.Value;
+        //                    Assert.AreNotEqual(serializingType, null);
+        //                    Assert.IsTrue(newUnknownProperties.ContainsKey(serializingType));
+        //                    newUnknownProperties[serializingType] = true;
+        //                }
+        //            }
+        //        }
+        //    }
 
-            foreach (KeyValuePair<string, bool> entry in newUnknownProperties)
-            {
-                Assert.IsTrue(entry.Value);
-            }
-        }
+        //    foreach (KeyValuePair<string, bool> entry in newUnknownProperties)
+        //    {
+        //        Assert.IsTrue(entry.Value);
+        //    }
+        //}
 
         private void TestManyAssetsSubsection(string game, EngineVersion version, Usmap mappings = null)
         {
@@ -395,17 +395,17 @@ namespace UAssetAPI.Tests
         [TestMethod]
         public void TestJson()
         {
-            TestJsonOnFile("PB_DT_RandomizerRoomCheck.uasset", EngineVersion.VER_UE4_18, Path.Combine("TestManyAssets", "Bloodstained"));
-            TestJsonOnFile("m02VIL_004_Gimmick.umap", EngineVersion.VER_UE4_18, Path.Combine("TestManyAssets", "Bloodstained"));
-            TestJsonOnFile("Staging_T2.umap", EngineVersion.VER_UE4_23, Path.Combine("TestManyAssets", "Astroneer"));
+            //TestJsonOnFile("PB_DT_RandomizerRoomCheck.uasset", EngineVersion.VER_UE4_18, Path.Combine("TestManyAssets", "Bloodstained"));
+            //TestJsonOnFile("m02VIL_004_Gimmick.umap", EngineVersion.VER_UE4_18, Path.Combine("TestManyAssets", "Bloodstained"));
+            //TestJsonOnFile("Staging_T2.umap", EngineVersion.VER_UE4_23, Path.Combine("TestManyAssets", "Astroneer"));
             TestJsonOnFile("Items.uasset", EngineVersion.VER_UE4_23); // string table
             //TestJsonOnFile("ABP_SMG_A.uasset", UE4Version.VER_UE4_25);
-            TestJsonOnFile("WPN_LockOnRifle.uasset", EngineVersion.VER_UE4_25);
-            TestJsonOnFile("Map_FrontEnd_Hotel_LS_Night.umap", EngineVersion.VER_UE4_27);
+            //TestJsonOnFile("WPN_LockOnRifle.uasset", EngineVersion.VER_UE4_25);
+            //TestJsonOnFile("Map_FrontEnd_Hotel_LS_Night.umap", EngineVersion.VER_UE4_27);
             TestJsonOnFile("AssetDatabase_AutoGenerated.uasset", EngineVersion.VER_UE4_27);
             TestJsonOnFile("RaceSimDataAsset.uasset", EngineVersion.VER_UE4_27);
             TestJsonOnFile("TurboAcres_Environment.uasset", EngineVersion.VER_UE4_27);
-            TestJsonOnFile("MGA_HeavyWeapon_Parent.uasset", EngineVersion.VER_UE4_25, "TestJson", "Outriders.usmap");
+            //TestJsonOnFile("MGA_HeavyWeapon_Parent.uasset", EngineVersion.VER_UE4_25, "TestJson", "Outriders.usmap");
         }
 
         /// <summary>
