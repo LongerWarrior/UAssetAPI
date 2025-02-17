@@ -1064,6 +1064,29 @@ namespace UAssetAPI
             return true;
         }
 
+        public bool VerifyBinaryEquality(UAsset second)
+        {
+            MemoryStream f = this.WriteData();
+            f.Seek(0, SeekOrigin.Begin);
+            MemoryStream newDataStream = second.WriteData();
+            newDataStream.Seek(0, SeekOrigin.Begin);
+
+            if (f.Length != newDataStream.Length) return false;
+
+            const int CHUNK_SIZE = 1024;
+            byte[] buffer = new byte[CHUNK_SIZE];
+            byte[] buffer2 = new byte[CHUNK_SIZE];
+            int lastRead1;
+            while ((lastRead1 = f.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                int lastRead2 = newDataStream.Read(buffer2, 0, buffer2.Length);
+                if (lastRead1 != lastRead2) return false;
+                if (!buffer.SequenceEqual(buffer2)) return false;
+            }
+
+            return true;
+        }
+
 
         /// <summary>
         /// Finds the class path and export name of the SuperStruct of this asset, if it exists.

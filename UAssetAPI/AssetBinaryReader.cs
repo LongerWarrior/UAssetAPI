@@ -102,6 +102,34 @@ namespace UAssetAPI
             }
         }
 
+        public virtual T[] ReadArray<T>(Func<T> readFunc)
+        {
+            int count = ReadInt32();
+            if (count < 0) throw new ArgumentOutOfRangeException("Negative array count");
+            if (count == 0) return [];
+
+            T[] result = new T[count];
+            for (int i = 0; i < count; i++)
+            {
+                result[i] = readFunc();
+            }
+            return result;
+        }
+
+        public virtual T[] ReadArray<T>(int count, Func<T> readFunc)
+        {
+            if (count < 0) throw new ArgumentOutOfRangeException("Negative array count");
+            if (count == 0) return [];
+
+            T[] result = new T[count];
+            for (int i = 0; i < count; i++)
+            {
+                result[i] = readFunc();
+            }
+            return result;
+        }
+
+
         public virtual FString ReadNameMapString(out uint hashes)
         {
             hashes = 0;
