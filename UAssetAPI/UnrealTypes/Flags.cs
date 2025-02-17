@@ -79,8 +79,9 @@ namespace UAssetAPI.UnrealTypes
 	    PKG_ContainsMap = 0x00020000,
 	    ///<summary>???</summary>
 	    PKG_RequiresLocalizationGather = 0x00040000,
-	    ///<summary>Set if the package was created for the purpose of PIE</summary>
-	    PKG_PlayInEditor = 0x00100000,
+        PKG_MemoryMappedAsset = 0x00800000,
+        ///<summary>Set if the package was created for the purpose of PIE</summary>
+        PKG_PlayInEditor = 0x00100000,
 	    ///<summary>Package is allowed to contain UClass objects</summary>
 	    PKG_ContainsScript = 0x00200000,
 	    ///<summary>Editor should not export asset in this package</summary>

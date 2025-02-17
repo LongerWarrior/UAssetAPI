@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using UAssetAPI.ExportTypes;
 using UAssetAPI.FieldTypes;
+using UAssetAPI.GameTypes.FF7Rebirth.PropertyTypes;
 using UAssetAPI.PropertyTypes.Objects;
 using UAssetAPI.PropertyTypes.Structs;
 using UAssetAPI.UnrealTypes;
@@ -625,6 +626,10 @@ namespace UAssetAPI
                 else if (property is RawStructPropertyData)
                 {
                     writer.Write(new FName(writer.Asset, FString.FromString("StructProperty")));
+                }
+                else if (property is FF7StructProperty)
+                {
+                    return 0;
                 }
                 else
                 {

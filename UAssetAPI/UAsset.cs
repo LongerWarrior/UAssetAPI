@@ -8,6 +8,7 @@ using System.Linq;
 using UAssetAPI.CustomVersions;
 using UAssetAPI.ExportTypes;
 using UAssetAPI.FieldTypes;
+using UAssetAPI.GameTypes.FF7Rebirth.ExportTypes;
 using UAssetAPI.JSON;
 using UAssetAPI.PropertyTypes.Objects;
 using UAssetAPI.UnrealTypes;
@@ -926,6 +927,10 @@ namespace UAssetAPI
                         else if (MainSerializer.PropertyTypeRegistry.ContainsKey(exportClassType) || MainSerializer.AdditionalPropertyRegistry.Contains(exportClassType))
                         {
                             Exports[i] = Exports[i].ConvertToChildExport<PropertyExport>();
+                        }
+                        else if (exportClassType.Contains("EndDataObject"))
+                        {
+                            Exports[i] = Exports[i].ConvertToChildExport<UEndDataObjectBase>();
                         }
                         else
                         {
