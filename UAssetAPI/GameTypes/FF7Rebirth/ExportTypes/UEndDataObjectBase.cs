@@ -1,8 +1,10 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using Newtonsoft.Json;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using UAssetAPI.ExportTypes;
 using UAssetAPI.GameTypes.FF7Rebirth.PropertyTypes;
@@ -35,12 +37,28 @@ public class UMemoryMappedAsset : NormalExport
     }
 }
 
-public struct FKey(FMemoryMappedImageArchive Ar) : IFF7FrozenProperty
+public struct FKey : IFF7FrozenProperty
 {
-    public FName Name = Ar.ReadFName();
-    public int Index = Ar.ReadInt32();
-    public int NextIndex = Ar.ReadInt32();
-    public int Priority = Ar.ReadInt32();
+    public FName Name;
+    public int Index;
+    public int NextIndex;
+    public int Priority;
+
+    public FKey(FName name, int index, int nextIndex, int priority)
+    {
+        Name = name;
+        Index = index;
+        NextIndex = nextIndex;
+        Priority = priority;
+    }
+    
+    public FKey(FMemoryMappedImageArchive Ar)
+    {
+        Name = Ar.ReadFName();
+        Index = Ar.ReadInt32();
+        NextIndex = Ar.ReadInt32();
+        Priority = Ar.ReadInt32();
+    }
 
     public void Write(FMemoryMappedImageWriter Ar)
     {
@@ -90,6 +108,33 @@ public class UEndDataObjectBase : UMemoryMappedAsset
         }
     }
 
+    public int[] GenerateIndex(List<FKey> keys)
+    {
+        var sorted = keys.OrderBy(x => x.Priority).ThenByDescending(x => x.NextIndex);
+        var indices = new List<int>();
+        var current = 0;
+        foreach (var key in sorted)
+        {
+            var priority = key.Priority;
+            if (priority > current)
+            {
+                indices.AddRange(Enumerable.Repeat(-1, priority - current));
+            }
+            else if(priority < current)
+            {
+                continue;
+            }
+            
+            indices.Add(key.Index);
+            current = priority + 1;
+        }
+
+        var currcount = (uint)indices.Count;
+        var count = currcount == 1 ? currcount : Math.Max(16, BitOperations.RoundUpToPowerOf2(currcount));
+        indices.AddRange(Enumerable.Repeat(-1, (int)(count - currcount)));
+        return indices.ToArray();
+    }
+
     public override void Write(AssetBinaryWriter writer)
     {
         var start = writer.BaseStream.Position;
@@ -100,18 +145,34 @@ public class UEndDataObjectBase : UMemoryMappedAsset
         Ar.Names = new Dictionary<int, List<int>>[writer.Asset.NameCount];
         Ar.StructDefinition = StructDefinition;
 
-        // writing sparsearray manually
-        var pointerOffset = Ar.WriteDummyPointer(Keys.Length);
-        Ar.AddQueue(new FF7OffsetProperty(pointerOffset));
+        var keysDictionary = new Dictionary<FName, FKey>(Keys.Length);
+        var maxpriority = 0;
         for (var i = 0; i < Keys.Length; i++)
         {
-            Ar.AddQueue(Keys[i]);
+            keysDictionary[Keys[i].Name] = Keys[i];
+            if (Keys[i].Priority > maxpriority) maxpriority = Keys[i].Priority;
+        }
+        
+        var newKeys = new List<FKey>(Data.Count);
+        for (var i = 0; i < Data.Count; i++)
+        {
+            var name = Data[i].Name;
+            newKeys.Add(keysDictionary.TryGetValue(name, out var key) ? key : new FKey(name, i, -1, ++maxpriority));
+            // adding new entries like this might double indices array, cause they usually round max indices count to the closest power of 2
+        }
+
+        // writing sparsearray manually
+        var pointerOffset = Ar.WriteDummyPointer(newKeys.Count);
+        Ar.AddQueue(new FF7OffsetProperty(pointerOffset));
+        for (var i = 0; i < newKeys.Count; i++)
+        {
+            Ar.AddQueue(newKeys[i]);
         }
 
         // writing BitArray
-        pointerOffset = Ar.WriteDummyPointer(Keys.Length);
-        var bitArray = new BitArray(Keys.Length, true);
-        int[] intArray = new int[(Keys.Length + 31) / 32]; // Each int holds 32 bits
+        pointerOffset = Ar.WriteDummyPointer(newKeys.Count);
+        var bitArray = new BitArray(newKeys.Count, true);
+        int[] intArray = new int[(newKeys.Count + 31) / 32]; // Each int holds 32 bits
         bitArray.CopyTo(intArray, 0);
         Ar.AddQueue(new FF7ArrayView(MemoryMarshal.AsBytes<int>(intArray).ToArray(), pointerOffset));
 
@@ -119,7 +180,8 @@ public class UEndDataObjectBase : UMemoryMappedAsset
         Ar.Write(-1);
         Ar.Write(0);
 
-        // writing Indexes, later we can generate it from Keys, max is zero to preserve binary equality
+        Indexes = GenerateIndex(newKeys);
+        // max is zero to preserve binary equality
         pointerOffset = Ar.WriteDummyPointer(Indexes.Length, 0);
         Ar.AddQueue(new FF7ArrayView(MemoryMarshal.AsBytes<int>(Indexes).ToArray(), pointerOffset));
 
@@ -132,9 +194,9 @@ public class UEndDataObjectBase : UMemoryMappedAsset
         }
 
         // writing values
-        pointerOffset = Ar.WriteDummyPointer(Keys.Length);
-        var align = PropUtils.GetPropAlign(StructDefinition[0].UnderlyingType);
-        if (Data[0] is FF7StructProperty strukt && strukt.Value[0] is FF7ArrayProperty) align = 8;
+        pointerOffset = Ar.WriteDummyPointer(newKeys.Count);
+        var align = PropUtils.GetPropAlign(Ar.StructDefinition[0].UnderlyingType);
+        if (Ar.StructDefinition[0].isArray) align = 8;
         Ar.AddQueue(new FF7RealignProperty(align));
         Ar.AddQueue(new FF7OffsetProperty(pointerOffset));
         foreach (var key in Data)
@@ -184,18 +246,5 @@ public class UEndDataObjectBase : UMemoryMappedAsset
         writer.BaseStream.Position = saved;
         writer.Write(count);
         writer.BaseStream.Position = writer.BaseStream.Length;
-
-        //writer.Write(Ar.Names.Count);
-        //// sort by key
-        //var names = Ar.Names.OrderBy(x => x.Key.Index).ThenBy(x => x.Key.Number);
-        //foreach (var name in names)
-        //{
-        //    writer.Write(name.Key);
-        //    writer.Write(name.Value.Count);
-        //    for (var i = 0; i < name.Value.Count; i++)
-        //    {
-        //        writer.Write(name.Value[i]);
-        //    }
-        //}
     }
 }

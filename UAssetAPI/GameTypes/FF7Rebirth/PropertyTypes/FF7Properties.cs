@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using Newtonsoft.Json;
 using UAssetAPI.GameTypes.FF7Rebirth.ExportTypes;
 using UAssetAPI.PropertyTypes.Objects;
 using UAssetAPI.PropertyTypes.Structs;
@@ -306,6 +307,7 @@ public class FF7StrProperty : StrPropertyData, IFF7FrozenProperty, IFF7AltFrozen
             Ar.WriteDummyPointer(0);
             return;
         }
+        Value.Encoding = Encoding.Unicode;
         var pointerOffset = Ar.WriteDummyPointer(Value.Value.Length + 1);
         Ar.AddIndirectDataQueue(new FF7String(Value, pointerOffset));
     }
@@ -317,6 +319,7 @@ public class FF7StrProperty : StrPropertyData, IFF7FrozenProperty, IFF7AltFrozen
             Ar.WriteDummyPointer(0);
             return;
         }
+        Value.Encoding = Encoding.Unicode;
         var pointerOffset = Ar.WriteDummyPointer(Value.Value.Length + 1);
         Ar.AddAltQueue(new FF7String(Value, pointerOffset));
     }
@@ -410,7 +413,7 @@ public class FF7InnerArrayProperty : IFF7FrozenProperty
 
 public class FF7ArrayProperty : ArrayPropertyData, IFF7FrozenProperty
 {
-    public FF7PropertyType ElementType;
+    [JsonProperty] public FF7PropertyType ElementType;
     
     public FF7ArrayProperty() { }
     public FF7ArrayProperty(FName name) : base(name) { }
